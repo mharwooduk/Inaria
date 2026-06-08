@@ -34,7 +34,39 @@ inaria https://example.com --desktop --mobile
 
 # Write to file
 inaria https://example.com -o report.json
+
+# Scan every URL in a sitemap (shows live progress on stderr)
+inaria --sitemap https://example.com/sitemap.xml --desktop --mobile -o sitemap-report.json
 ```
+
+### Sitemap scans
+
+Pass `--sitemap` instead of a page URL. Inaria fetches the sitemap (including nested sitemap indexes), then audits each URL sequentially using one Chrome instance.
+
+Progress prints to stderr in real time:
+
+```text
+inaria: found 24 URLs to scan
+inaria: scanning 3/24 — https://example.com/about
+```
+
+Stdout (or `-o` file) receives a summary object:
+
+```json
+{
+  "sitemap": "https://example.com/sitemap.xml",
+  "total": 24,
+  "scanned": 24,
+  "pages": [
+    {
+      "url": "https://example.com/",
+      "audits": { "scores": { "performance": 92 }, "issues": [] }
+    }
+  ]
+}
+```
+
+If a single page fails, the scan continues and that page includes an `error` field instead of `audits`.
 
 ## Output
 
@@ -97,6 +129,7 @@ Add this to your project's `AGENTS.md`, Cursor rules, or similar agent context:
 
 **Command:**
 inaria <url> [--desktop] [--mobile] [-o <file>]
+inaria --sitemap <sitemap-url> [--desktop] [--mobile] [-o <file>]
 
 **Defaults:** `--desktop` if no form factor flag is given.
 
