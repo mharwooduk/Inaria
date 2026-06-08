@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Chrome profile temp dirs from audits
+.tmp/
+
+# Audit output
+report.json
+*.report.json
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/

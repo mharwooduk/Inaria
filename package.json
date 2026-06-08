@@ -1,0 +1,20 @@
+{
+  "name": "inaria",
+  "version": "1.0.0",
+  "description": "Inaria — condensed Lighthouse audits for AI-friendly JSON output",
+  "type": "module",
+  "bin": {
+    "inaria": "./cli.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node cli.js"
+  },
+  "dependencies": {
+    "chrome-launcher": "^1.1.2",
+    "commander": "^12.1.0",
+    "lighthouse": "^12.6.1"
+  }
+}
