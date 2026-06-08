@@ -20,6 +20,30 @@ npm link
 
 After `npm link`, the `inaria` command is available globally.
 
+## Command-line options
+
+Run `inaria --help` for full usage. Options:
+
+| Option | Description |
+|--------|-------------|
+| `[url]` | Page to audit (`http` or `https`). Omit when using `--sitemap`. |
+| `--desktop` | Run a desktop Lighthouse audit. **Default** when neither `--desktop` nor `--mobile` is set. |
+| `--mobile` | Run a mobile Lighthouse audit. Combine with `--desktop` to run both. |
+| `--sitemap <url>` | Fetch a sitemap (including nested sitemap indexes) and audit every listed URL. Replaces `[url]`. |
+| `-c, --concurrency <n>` | Parallel Chrome workers for `--sitemap` scans. Default: half your CPU cores, max 4. Higher values scan faster but use more memory. |
+| `-o, --output <file>` | Write JSON to a file instead of stdout. Progress and errors still go to stderr. |
+| `-h, --help` | Show usage, options, and examples. |
+
+**Modes**
+
+- **Single page:** `inaria <url> [options]` — one object, or a two-item array if both form factors are requested.
+- **Sitemap:** `inaria --sitemap <sitemap-url> [options]` — summary object with a `pages` array (one entry per URL).
+
+**Streams**
+
+- **stdout** — audit JSON only (pipe-friendly).
+- **stderr** — progress, status, and errors (not mixed into JSON output).
+
 ## Usage
 
 ```bash
@@ -37,18 +61,36 @@ inaria https://example.com -o report.json
 
 # Scan every URL in a sitemap (shows live progress on stderr)
 inaria --sitemap https://example.com/sitemap.xml --desktop --mobile -o sitemap-report.json
+
+# Sitemap with 6 parallel workers
+inaria --sitemap https://example.com/sitemap.xml -c 6 -o sitemap-report.json
 ```
 
 ### Sitemap scans
 
-Pass `--sitemap` instead of a page URL. Inaria fetches the sitemap (including nested sitemap indexes), then audits each URL sequentially using one Chrome instance.
+Pass `--sitemap` instead of a page URL. Inaria fetches the sitemap (including nested sitemap indexes), then audits URLs in parallel (default: half your CPU cores, max 4 Chrome workers). Use `-c` / `--concurrency` to tune.
 
 Progress prints to stderr in real time:
 
 ```text
-inaria: found 24 URLs to scan
-inaria: scanning 3/24 — https://example.com/about
+inaria: found 24 URLs — 4 parallel worker(s)
+
+inaria  sitemap scan
+[████████░░░░░░░░░░░░░░░░░░░░] 8/24 (33%)  elapsed 1m12s  eta 2m30s
+ok 7  fail 1  running 3
+
+running
+  • https://example.com/contact
+  • https://example.com/blog
+
+recent
+  ✓ https://example.com/about
+  ✗ https://example.com/broken
+
+inaria  done  23 ok  1 failed  3m45s
 ```
+
+When stderr is not a TTY (e.g. piped to a log file), each completed URL is logged on its own line instead.
 
 Stdout (or `-o` file) receives a summary object:
 
@@ -129,7 +171,7 @@ Add this to your project's `AGENTS.md`, Cursor rules, or similar agent context:
 
 **Command:**
 inaria <url> [--desktop] [--mobile] [-o <file>]
-inaria --sitemap <sitemap-url> [--desktop] [--mobile] [-o <file>]
+inaria --sitemap <sitemap-url> [--desktop] [--mobile] [-c <n>] [-o <file>]
 
 **Defaults:** `--desktop` if no form factor flag is given.
 

@@ -2,6 +2,7 @@
 
 import { writeFileSync } from 'node:fs';
 import { Command } from 'commander';
+import { defaultConcurrency } from './lib/progress.js';
 import { runAudits, runSitemapAudits } from './lib/run-audit.js';
 import { fetchSitemapUrls } from './lib/sitemap.js';
 
@@ -40,12 +41,62 @@ const program = new Command();
 
 program
   .name('inaria')
-  .description('Run Lighthouse audits and output condensed JSON')
-  .argument('[url]', 'URL to audit')
-  .option('--desktop', 'run desktop audit')
-  .option('--mobile', 'run mobile audit')
-  .option('--sitemap <url>', 'sitemap URL — audit every page listed in the sitemap')
-  .option('-o, --output <file>', 'write JSON to file instead of stdout')
+  .summary('Condensed Lighthouse audits as JSON for AI tools and scripts')
+  .description(
+    'Run Lighthouse against a single page or every URL in a sitemap. Writes condensed JSON to stdout; progress and status messages go to stderr.',
+  )
+  .argument(
+    '[url]',
+    'Page to audit (must be http or https). Not used with --sitemap.',
+  )
+  .option(
+    '--desktop',
+    'Run a desktop audit. Included by default unless you pass only --mobile.',
+  )
+  .option(
+    '--mobile',
+    'Run a mobile audit. Pass with --desktop to audit both form factors.',
+  )
+  .option(
+    '--sitemap <url>',
+    'Fetch a sitemap (supports nested sitemap indexes) and audit every listed page. Replaces the [url] argument.',
+  )
+  .option(
+    '-c, --concurrency <n>',
+    'Number of parallel Chrome workers for --sitemap scans. Higher is faster but uses more RAM. Default: half of CPU cores, capped at 4.',
+    (value) => {
+      const parsed = Number.parseInt(value, 10);
+      if (!Number.isFinite(parsed) || parsed < 1) {
+        throw new Error('concurrency must be a positive integer');
+      }
+      return parsed;
+    },
+  )
+  .option(
+    '-o, --output <file>',
+    'Write JSON results to this file instead of stdout. Progress still prints to stderr.',
+  )
+  .addHelpText(
+    'after',
+    `
+Modes:
+  Single page     inaria <url> [options]
+  Sitemap crawl   inaria --sitemap <sitemap-url> [options]
+
+Form factors (single-page and sitemap):
+  (none)                  desktop only
+  --mobile                mobile only
+  --desktop --mobile      both; JSON is an array of two audit objects per page
+
+Output:
+  stdout                  condensed JSON (safe to pipe to jq or an AI agent)
+  -o, --output <file>     same JSON written to a file
+  stderr                  fetch/scan progress, per-page status, and errors
+
+Sitemap JSON shape:
+  { sitemap, total, scanned, pages: [{ url, audits | error }, ...] }
+`,
+  )
   .action(async (url, options) => {
     try {
       const formFactors = resolveFormFactors(options);
@@ -59,9 +110,14 @@ program
           throw new Error(`No URLs found in sitemap: ${sitemapUrl}`);
         }
 
-        process.stderr.write(`inaria: found ${urls.length} URLs to scan\n`);
+        const workers = options.concurrency ?? defaultConcurrency();
+        process.stderr.write(
+          `inaria: found ${urls.length} URLs — ${workers} parallel worker(s)\n\n`,
+        );
 
-        const pages = await runSitemapAudits(urls, formFactors);
+        const pages = await runSitemapAudits(urls, formFactors, {
+          concurrency: workers,
+        });
         writeOutput(
           {
             sitemap: sitemapUrl,
