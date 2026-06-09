@@ -32,7 +32,9 @@
     "LICENSE",
     "AGENTS.md"
   ],
-  "bin": "./cli.js",
+  "bin": {
+    "inaria": "cli.js"
+  },
   "engines": {
     "node": ">=22"
   },
