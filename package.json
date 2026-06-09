@@ -1,6 +1,6 @@
 {
   "name": "inaria",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Lighthouse shaped for AI agents — condensed JSON with scores, metrics, and actionable failing elements",
   "type": "module",
   "license": "MIT",
@@ -32,7 +32,9 @@
     "LICENSE",
     "AGENTS.md"
   ],
-  "bin": "./cli.js",
+  "bin": {
+    "inaria": "cli.js"
+  },
   "engines": {
     "node": ">=22"
   },
