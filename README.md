@@ -84,43 +84,38 @@ Run `inaria --help` for the full CLI reference.
 ### CLI reference
 
 ```text
-INARIA
 
-VERSION                 -V, --version
+ ▄▄▄▄▄                         ▀
+   █    ▄ ▄▄    ▄▄▄    ▄ ▄▄  ▄▄▄     ▄▄▄
+   █    █▀  █  ▀   █   █▀  ▀   █    ▀   █
+   █    █   █  ▄▀▀▀█   █       █    ▄▀▀▀█
+ ▄▄█▄▄  █   █  ▀▄▄▀█   █     ▄▄█▄▄  ▀▄▄▀█ 1.2.0
 
-USAGE
-  inaria <url> [options]
-  inaria --sitemap <sitemap-url> [options]
+Usage: inaria [options] [url]
 
-FORM FACTORS
-  Desktop only            (default)
-  Mobile only             --mobile
-  Desktop + Mobile        --desktop --mobile
+Run Lighthouse on a page or sitemap. JSON to stdout; progress to stderr. Turns megabytes of audit noise into a few kilobytes   
+of actionable context for coding agents
 
-OUTPUT MODES
-  Default                 Scores, metrics, top 25 issues
-  --all-issues            All failing audits and elements
-  --fullreport            Full Lighthouse JSON (1–5+ MB)
+Arguments:
+  url                    Page URL (http/https). Omit with --sitemap.
 
-JSON FORMATTING
-  stdout                  Compact JSON (default)
-  --compact               Force compact JSON
-  --pretty                Force pretty JSON
-  -o, --output <file>     Save formatted JSON to file
+Options:
+  -V, --version          output the version number
+  --desktop              Desktop audit (default unless --mobile only).
+  --mobile               Mobile audit. Use with --desktop for both.
+  --sitemap <url>        Audit all URLs from sitemap (nested indexes supported).
+  -c, --concurrency <n>  Parallel Chrome workers for sitemap scans (default: half CPU cores, max 4).
+  -o, --output <file>    Save JSON to file instead of stdout.
+  --fullreport           Full Lighthouse JSON (1–5+ MB). Not for AI pipes.
+  --all-issues           All failing audits and elements (no caps). Ignored with --fullreport.
+  --compact              Force compact JSON (default on stdout).
+  --pretty               Force pretty JSON (default with -o).
+  -h, --help             display help for command
 
-STREAMS
-  stdout                  JSON output only
-  stderr                  Progress, status, errors
-
-SITEMAP RESULT
-  ┌─────────────────────────────────────┐
-  │ sitemap                             │
-  │ total                               │
-  │ scanned                             │
-  │ pages[]                             │
-  │   ├─ url                            │
-  │   └─ audits | error                 │
-  └─────────────────────────────────────┘
+EXAMPLES
+  inaria https://example.com
+  inaria https://example.com --desktop --mobile -o report.json
+  inaria --sitemap https://example.com/sitemap.xml -c 4
 ```
 
 | Option | Description |
