@@ -2,98 +2,75 @@
   <img src="assets/inaria-banner.png" alt="Inaria" width="600">
 </p>
 
-<p align="center">
-  <a href="https://www.npmjs.com/package/inaria"><img src="https://img.shields.io/npm/v/inaria.svg" alt="npm version"></a>
-  <a href="https://github.com/mharwooduk/Inaria/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="license"></a>
-  <img src="https://img.shields.io/badge/node-%3E%3D22-brightgreen.svg" alt="node >=22">
-</p>
+# Inaria
 
-**Lighthouse shaped for AI agents, not HTML reports.**
+Condensed Lighthouse audits as small JSON — built for piping into AI tools.
 
-Thin wrapper around Lighthouse + Chrome. Real value is `condense()` — turns megabytes of audit noise into a few kilobytes of actionable context for coding agents.
+## Prerequisites
 
-## Quick start
+- Node.js 22+
+- Google Chrome or Chromium installed and discoverable on your system
+
+## Install
 
 ```bash
-npx inaria https://example.com
-pnpm dlx inaria https://example.com
-yarn dlx inaria https://example.com
+npm install
+npm link
 ```
 
-**Prerequisites:** Node.js 22+, Google Chrome or Chromium on your system.
+After `npm link`, the `inaria` command is available globally.
 
-## Why Inaria
+## Command-line options
 
-Running Lighthouse is easy. Feeding the output to an AI agent is not.
+Run `inaria --help` for full usage. Options:
 
-| | Raw Lighthouse JSON | Inaria output |
-|---|---|---|
-| **Size** | Often 1–5+ MB | Typically a few KB |
-| **Audits** | Hundreds, traces, tables | Scores, core metrics, top 25 failures |
-| **DOM context** | Buried in `details.items` | `failingElements` with selector, snippet, explanation |
-| **Streams** | Progress mixed with output | stdout = JSON only, stderr = progress |
+| Option | Description |
+|--------|-------------|
+| `[url]` | Page to audit (`http` or `https`). Omit when using `--sitemap`. |
+| `--desktop` | Run a desktop Lighthouse audit. **Default** when neither `--desktop` nor `--mobile` is set. |
+| `--mobile` | Run a mobile Lighthouse audit. Combine with `--desktop` to run both. |
+| `--sitemap <url>` | Fetch a sitemap (including nested sitemap indexes) and audit every listed URL. Replaces `[url]`. |
+| `-c, --concurrency <n>` | Parallel Chrome workers for `--sitemap` scans. Default: half your CPU cores, max 4. Higher values scan faster but use more memory. |
+| `-o, --output <file>` | Write JSON to a file instead of stdout. Progress and errors still go to stderr. |
+| `-h, --help` | Show usage, options, and examples. |
 
-For an agent that needs to find and fix issues in a codebase, that condensation is the point. Full Lighthouse JSON wastes context, adds noise, and makes prioritization harder.
+**Modes**
 
-## What it is
+- **Single page:** `inaria <url> [options]` — one object, or a two-item array if both form factors are requested.
+- **Sitemap:** `inaria --sitemap <sitemap-url> [options]` — summary object with a `pages` array (one entry per URL).
 
-- **Lighthouse → agent-ready JSON.** Scores, metrics, failing audits with DOM selectors and snippets.
-- **Sitemap sweeps.** Parallel Chrome workers with live TTY progress on stderr.
-- **Pipe-friendly.** Compact JSON on stdout by default. Progress never pollutes the JSON stream.
+**Streams**
 
-## What it isn't
-
-| Need | Use instead |
-|------|-------------|
-| Full audit fidelity (80+ a11y failures) | `--all-issues` or `--fullreport`, or raw `npx lighthouse` |
-| Real-user field data (CrUX) | PageSpeed Insights API |
-| CI score gates and regression tracking | Lighthouse CI (`@lhci/cli`) |
-| Human-readable HTML dashboards | Lighthouse CLI `--view`, Unlighthouse |
-| Deep perf debugging (waterfall, flame charts) | Chrome DevTools |
-| Zero-setup cloud audits | PSI API (still needs local Chrome for Inaria) |
-
-Default output caps at **25 issues** and **15 elements per issue** — tuned for agent context, not compliance sign-off. Escape hatches below.
+- **stdout** — audit JSON only (pipe-friendly).
+- **stderr** — progress, status, and errors (not mixed into JSON output).
 
 ## Usage
 
 ```bash
 # Desktop audit (default)
-npx inaria https://example.com
+inaria https://example.com
 
 # Mobile only
-npx inaria https://example.com --mobile
+inaria https://example.com --mobile
 
-# Both form factors (JSON array of two objects)
-npx inaria https://example.com --desktop --mobile
+# Both desktop and mobile
+inaria https://example.com --desktop --mobile
 
-# Write pretty JSON to file
-npx inaria https://example.com -o report.json
+# Write to file
+inaria https://example.com -o report.json
 
-# Sitemap crawl with live progress on stderr
-npx inaria --sitemap https://example.com/sitemap.xml --desktop --mobile -o sitemap-report.json
+# Scan every URL in a sitemap (shows live progress on stderr)
+inaria --sitemap https://example.com/sitemap.xml --desktop --mobile -o sitemap-report.json
 
-# 6 parallel workers
-npx inaria --sitemap https://example.com/sitemap.xml -c 6
+# Sitemap with 6 parallel workers
+inaria --sitemap https://example.com/sitemap.xml -c 6 -o sitemap-report.json
 ```
 
-Run `inaria --help` for full option reference.
+### Sitemap scans
 
-### Command-line options
+Pass `--sitemap` instead of a page URL. Inaria fetches the sitemap (including nested sitemap indexes), then audits URLs in parallel (default: half your CPU cores, max 4 Chrome workers). Use `-c` / `--concurrency` to tune.
 
-| Option | Description |
-|--------|-------------|
-| `[url]` | Page to audit (`http` or `https`). Omit when using `--sitemap`. |
-| `--desktop` | Desktop audit. **Default** when no form factor flag is set. |
-| `--mobile` | Mobile audit. Combine with `--desktop` for both. |
-| `--sitemap <url>` | Fetch sitemap (nested indexes supported) and audit every URL. |
-| `-c, --concurrency <n>` | Parallel Chrome workers for sitemap scans. Default: half CPU cores, max 4. |
-| `-o, --output <file>` | Write JSON to file instead of stdout. |
-| `--all-issues` | Condensed JSON with no issue/element/resource caps. |
-| `--fullreport` | Raw Lighthouse LHR JSON (1–5+ MB). For debug/archival — not AI pipes. |
-| `--compact` | Minified JSON. Default on stdout. |
-| `--pretty` | Pretty-printed JSON. Overrides `--compact`. |
-
-### Sitemap progress
+Progress prints to stderr in real time:
 
 ```text
 inaria: found 24 URLs — 4 parallel worker(s)
@@ -113,26 +90,46 @@ recent
 inaria  done  23 ok  1 failed  3m45s
 ```
 
-When stderr is not a TTY, each completed URL logs on its own line.
+When stderr is not a TTY (e.g. piped to a log file), each completed URL is logged on its own line instead.
+
+Stdout (or `-o` file) receives a summary object:
+
+```json
+{
+  "sitemap": "https://example.com/sitemap.xml",
+  "total": 24,
+  "scanned": 24,
+  "pages": [
+    {
+      "url": "https://example.com/",
+      "audits": { "scores": { "performance": 92 }, "issues": [] }
+    }
+  ]
+}
+```
+
+If a single page fails, the scan continues and that page includes an `error` field instead of `audits`.
 
 ## Output
 
-### Default (condensed)
-
-Each audit returns a small JSON object:
+Each audit returns a small JSON object with:
 
 - `url` — final audited URL
 - `formFactor` — `desktop` or `mobile`
 - `fetchTime` — ISO timestamp
-- `scores` — category scores (0–100): performance, accessibility, best-practices, SEO
+- `scores` — category scores (0–100) for performance, accessibility, best-practices, and SEO
 - `metrics` — core web vitals and related performance metrics
-- `issues` — up to 25 failing audits, worst first, each with:
-  - `description` — audit explanation
-  - `failingElements` — DOM nodes (`label`, `selector`, `snippet`, `explanation`)
-  - `resources` — URLs and savings for performance opportunities
+- `issues` — up to 25 failing audits, worst first, each including:
+  - `description` — audit explanation text
+  - `failingElements` — DOM nodes tied to the issue (`label`, `selector`, `snippet`, `explanation`)
+  - `resources` — URLs and savings for performance opportunity audits
+
+When both form factors are requested, output is a JSON array of two objects.
+
+## Example
 
 ```bash
-npx inaria https://example.com | jq '.issues[0]'
+inaria https://example.com | jq '.issues[0]'
 ```
 
 ```json
@@ -147,89 +144,82 @@ npx inaria https://example.com | jq '.issues[0]'
       "selector": "pre.astro-code.github-dark > code > span",
       "snippet": "<span style=\"color: rgb(227, 148, 220);\">",
       "explanation": "Fix any of the following:\n  Element has insufficient color contrast..."
+    },
+    {
+      "label": "pre.astro-code.github-dark",
+      "selector": "pre.astro-code.github-dark",
+      "snippet": "<pre class=\"astro-code github-dark\">"
     }
   ]
 }
 ```
 
-### Output modes
-
-| Mode | Flag | Size | Best for |
-|------|------|------|----------|
-| Condensed | (default) | Few KB | AI fix loops |
-| All issues | `--all-issues` | Larger | Every failure, still agent-shaped |
-| Full LHR | `--fullreport` | 1–5+ MB | Debug, archival, custom post-processing |
-
-### JSON formatting
-
-Stdout defaults to **compact** (minified) JSON — saves ~25–30% tokens vs pretty-print for AI pipes.
-
-- **stdout** — compact by default
-- **`-o file.json`** — pretty-printed by default (readable in editors)
-- **`--compact`** / **`--pretty`** — override either way
-
-**Why JSON?** LLMs parse it reliably. Inaria's real token win is `condense()`, not the serialization format. Compact JSON is the best default; alternatives like TOON can help on uniform arrays but add dependency and tooling friction — JSON stays default.
-
 ## Using with AI
 
-Inaria is built to be run by a coding agent, not pasted into chat manually.
+Inaria is designed to be run by an AI coding agent, not just pasted into chat manually. Give the agent the tool definition below, then ask it to audit your site and fix what it finds.
 
-See **[AGENTS.md](AGENTS.md)** for a copy-paste tool definition (Cursor rules, `AGENTS.md` in your repo, etc.).
+### Presenting the tool to AI
+
+Add this to your project's `AGENTS.md`, Cursor rules, or similar agent context:
+
+```markdown
+## Inaria (Lighthouse CLI)
+
+`inaria` is a global CLI that runs condensed Lighthouse audits and prints small JSON to stdout.
+
+**Prerequisites:** Node.js 22+, Chrome/Chromium installed, `npm link` run in the Inaria repo.
+
+**Command:**
+inaria <url> [--desktop] [--mobile] [-o <file>]
+inaria --sitemap <sitemap-url> [--desktop] [--mobile] [-c <n>] [-o <file>]
+
+**Defaults:** `--desktop` if no form factor flag is given.
+
+**Output:** JSON with `scores`, `metrics`, and `issues`. Each issue may include
+`failingElements` (label, selector, snippet, explanation) and `resources` (URLs, wasted bytes).
+
+**Workflow:**
+1. Run `inaria <url> --desktop --mobile` against the local or deployed URL.
+2. Read `issues` — prioritize score 0 items and low category scores.
+3. Use `failingElements.selector` / `snippet` to locate the source in the codebase.
+4. Apply fixes in the repo.
+5. Re-run `inaria` to confirm scores improved and issues are gone.
+```
 
 ### Example prompt
 
-```text
-Run Inaria against https://localhost:4321 for both desktop and mobile:
+Copy and adapt this when asking an AI agent to work on your site:
 
-  npx inaria https://localhost:4321 --desktop --mobile
+```text
+Run Inaria against https://localhost:4321 (or our staging URL) for both desktop
+and mobile:
+
+  inaria https://localhost:4321 --desktop --mobile
 
 Use the JSON output to fix every failing audit you can in this codebase. For each
 issue, use failingElements (selector, snippet, label) to find the matching
-component or stylesheet.
+component or stylesheet. Fix accessibility contrast issues, SEO gaps, and
+performance opportunities listed under resources.
 
-After making changes, run Inaria again and confirm scores improved. Summarize
-what you fixed and the before/after scores.
+After making changes, run Inaria again and confirm scores went up and resolved
+issues no longer appear. Summarize what you fixed and the before/after scores.
 ```
 
-### Agent workflow
+### Example agent workflow
 
 ```bash
 # 1. Audit
-npx inaria http://localhost:3000 --desktop --mobile -o audit.json
+inaria http://localhost:3000 --desktop --mobile -o audit.json
 
 # 2. Agent reads audit.json, edits source files
 
 # 3. Verify
-npx inaria http://localhost:3000 --desktop --mobile
+inaria http://localhost:3000 --desktop --mobile
 ```
 
-## Alternatives
+**Tips for agents:**
 
-| Tool | Best for |
-|------|----------|
-| **Inaria** | Small JSON for AI agents — selectors, snippets, fix loops |
-| `npx lighthouse` | Full JSON/HTML reports, every audit, official defaults |
-| `@lhci/cli` | PR checks, score budgets, historical reports |
-| Unlighthouse | Whole-site scans with HTML UI |
-| PageSpeed Insights API | Lab + field data from Google's infra, no local Chrome |
-
-None of these optimize for small AI-consumable JSON with `failingElements` the way Inaria does.
-
-## Where it shines
-
-- Local and staging URLs in agent-driven fix loops
-- Sitemap sweeps piped into scripts that feed an LLM
-- stdout/stderr contract that keeps JSON clean for pipes
-
-## Install from source
-
-```bash
-git clone https://github.com/mharwooduk/Inaria.git
-cd Inaria
-npm install
-npm link   # optional: global `inaria` command
-```
-
-## License
-
-MIT — free to use, fork, modify, and redistribute. See [LICENSE](LICENSE).
+- Audit the URL the dev server actually serves (include port and `http` vs `https`).
+- `failingElements.label` is often the element tag or visible text; `selector` is the CSS path Lighthouse used.
+- Performance issues with `resources` point at specific scripts or images to optimize or defer.
+- Run both form factors — mobile and desktop can surface different issues.

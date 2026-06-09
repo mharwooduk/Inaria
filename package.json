@@ -1,38 +1,11 @@
 {
   "name": "inaria",
-  "version": "1.1.0",
-  "description": "Lighthouse shaped for AI agents — condensed JSON with scores, metrics, and actionable failing elements",
+  "version": "1.0.0",
+  "description": "Inaria — condensed Lighthouse audits for AI-friendly JSON output",
   "type": "module",
-  "license": "MIT",
-  "author": "mharwooduk",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/mharwooduk/Inaria.git"
+  "bin": {
+    "inaria": "./cli.js"
   },
-  "homepage": "https://github.com/mharwooduk/Inaria#readme",
-  "bugs": {
-    "url": "https://github.com/mharwooduk/Inaria/issues"
-  },
-  "keywords": [
-    "lighthouse",
-    "performance",
-    "accessibility",
-    "ai",
-    "cli",
-    "audit",
-    "web-vitals",
-    "seo",
-    "core-web-vitals"
-  ],
-  "files": [
-    "cli.js",
-    "lib/",
-    "assets/",
-    "README.md",
-    "LICENSE",
-    "AGENTS.md"
-  ],
-  "bin": "./cli.js",
   "engines": {
     "node": ">=22"
   },
