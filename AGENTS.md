@@ -13,11 +13,15 @@ Copy this section into your project's `AGENTS.md`, Cursor rules, or similar agen
 ```bash
 npx inaria <url> [options]
 npx inaria --sitemap <sitemap-url> [options]
+npx inaria --version
 ```
 
 **Commands:**
 
 ```bash
+# Check version
+npx inaria --version
+
 # Single page (desktop default)
 npx inaria https://example.com
 
@@ -33,16 +37,34 @@ npx inaria https://example.com -o audit.json
 
 **Output modes:**
 
-| Mode | Flag | Use when |
-|------|------|----------|
-| Condensed (default) | — | AI fix loops. Top 25 issues, 15 elements each. Few KB. |
-| All issues | `--all-issues` | Need every failure, still agent-shaped JSON. |
-| Full report | `--fullreport` | Debug/archival. Raw Lighthouse LHR (1–5+ MB). Not for LLM pipes. |
+| Mode | Flag |
+|------|------|
+| Default | Scores, metrics, top 25 issues |
+| All issues | `--all-issues` |
+| Full report | `--fullreport` (1–5+ MB; not for LLM pipes) |
+
+**JSON formatting:**
+
+| Target | Format |
+|--------|--------|
+| stdout | Compact JSON (default) |
+| `-o, --output <file>` | Pretty JSON (default) |
+| `--compact` | Force compact JSON |
+| `--pretty` | Force pretty JSON |
+
+**Info:**
+
+| Flag | Description |
+|------|-------------|
+| `-V, --version` | Print CLI version and exit |
+| `-h, --help` | Full usage reference |
 
 **Streams:**
 
-- **stdout** — audit JSON only (compact/minified by default; pipe-safe)
-- **stderr** — progress, status, errors (never mixed into JSON)
+- **stdout** — JSON output only
+- **stderr** — progress, status, errors
+
+**Sitemap result shape:** `{ sitemap, total, scanned, pages: [{ url, audits | error }] }`
 
 **JSON shape (condensed):**
 

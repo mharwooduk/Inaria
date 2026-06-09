@@ -18,6 +18,9 @@ Thin wrapper around Lighthouse + Chrome. Real value is `condense()` — turns me
 npx inaria https://example.com
 pnpm dlx inaria https://example.com
 yarn dlx inaria https://example.com
+
+# Check installed version
+npx inaria --version
 ```
 
 **Prerequisites:** Node.js 22+, Google Chrome or Chromium on your system.
@@ -76,22 +79,57 @@ npx inaria --sitemap https://example.com/sitemap.xml --desktop --mobile -o sitem
 npx inaria --sitemap https://example.com/sitemap.xml -c 6
 ```
 
-Run `inaria --help` for full option reference.
+Run `inaria --help` for the full CLI reference.
 
-### Command-line options
+### CLI reference
+
+```text
+INARIA
+
+VERSION                 -V, --version
+
+USAGE
+  inaria <url> [options]
+  inaria --sitemap <sitemap-url> [options]
+
+FORM FACTORS
+  Desktop only            (default)
+  Mobile only             --mobile
+  Desktop + Mobile        --desktop --mobile
+
+OUTPUT MODES
+  Default                 Scores, metrics, top 25 issues
+  --all-issues            All failing audits and elements
+  --fullreport            Full Lighthouse JSON (1–5+ MB)
+
+JSON FORMATTING
+  stdout                  Compact JSON (default)
+  --compact               Force compact JSON
+  --pretty                Force pretty JSON
+  -o, --output <file>     Save formatted JSON to file
+
+STREAMS
+  stdout                  JSON output only
+  stderr                  Progress, status, errors
+
+SITEMAP RESULT
+  ┌─────────────────────────────────────┐
+  │ sitemap                             │
+  │ total                               │
+  │ scanned                             │
+  │ pages[]                             │
+  │   ├─ url                            │
+  │   └─ audits | error                 │
+  └─────────────────────────────────────┘
+```
 
 | Option | Description |
 |--------|-------------|
 | `[url]` | Page to audit (`http` or `https`). Omit when using `--sitemap`. |
-| `--desktop` | Desktop audit. **Default** when no form factor flag is set. |
-| `--mobile` | Mobile audit. Combine with `--desktop` for both. |
 | `--sitemap <url>` | Fetch sitemap (nested indexes supported) and audit every URL. |
 | `-c, --concurrency <n>` | Parallel Chrome workers for sitemap scans. Default: half CPU cores, max 4. |
-| `-o, --output <file>` | Write JSON to file instead of stdout. |
-| `--all-issues` | Condensed JSON with no issue/element/resource caps. |
-| `--fullreport` | Raw Lighthouse LHR JSON (1–5+ MB). For debug/archival — not AI pipes. |
-| `--compact` | Minified JSON. Default on stdout. |
-| `--pretty` | Pretty-printed JSON. Overrides `--compact`. |
+| `-V, --version` | Print the CLI version and exit. |
+| `-h, --help` | Show usage, options, and examples. |
 
 ### Sitemap progress
 
@@ -154,21 +192,22 @@ npx inaria https://example.com | jq '.issues[0]'
 
 ### Output modes
 
-| Mode | Flag | Size | Best for |
-|------|------|------|----------|
-| Condensed | (default) | Few KB | AI fix loops |
-| All issues | `--all-issues` | Larger | Every failure, still agent-shaped |
-| Full LHR | `--fullreport` | 1–5+ MB | Debug, archival, custom post-processing |
+| Mode | Flag | Best for |
+|------|------|----------|
+| Default | — | Scores, metrics, top 25 issues. AI fix loops. |
+| All issues | `--all-issues` | Every failing audit and element, still agent-shaped. |
+| Full report | `--fullreport` | Full Lighthouse JSON (1–5+ MB). Debug and archival. |
 
 ### JSON formatting
 
-Stdout defaults to **compact** (minified) JSON — saves ~25–30% tokens vs pretty-print for AI pipes.
+| Target | Format |
+|--------|--------|
+| stdout | Compact JSON (default) |
+| `-o, --output <file>` | Pretty JSON (default) |
+| `--compact` | Force compact JSON |
+| `--pretty` | Force pretty JSON |
 
-- **stdout** — compact by default
-- **`-o file.json`** — pretty-printed by default (readable in editors)
-- **`--compact`** / **`--pretty`** — override either way
-
-**Why JSON?** LLMs parse it reliably. Inaria's real token win is `condense()`, not the serialization format. Compact JSON is the best default; alternatives like TOON can help on uniform arrays but add dependency and tooling friction — JSON stays default.
+LLMs parse JSON reliably. Inaria's main token win is `condense()`, not the serialization format.
 
 ## Using with AI
 
